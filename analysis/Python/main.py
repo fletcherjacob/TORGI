@@ -6,37 +6,35 @@ import pandas as pd
 
 def individual_output():
     con = sqlite3.connect(":memory:")
-    import_path = '/home/summerintern18/Torgi/GPKG-DATA/'  ###Import Directory Path
-    descrip = 'Control-'  ### FileId Category Identifier
+    import_path = '/home/fletcher/dev/0_Torgi/data/'  ###Import Directory Path
+    descrip = 'EMI-'  ### FileId Category Identifier
     print(import_path)
-    x = 83    ####FileId starting number
+    x = 0   ####FileId starting number
 
     for filename in os.listdir(import_path):
         try:
-            x = x + 1
-            fileId = descrip + str(x)
+
+            # Save the full name if ext matches
 
             if filename.endswith(".gpkg"):
-                con = sqlite3.connect(":memory:")
-                print(filename)
+                x = x + 1
                 sqlite_file = import_path + filename
                 conn = sqlite3.connect(sqlite_file)
                 cur = conn.cursor()
-                data = cur.execute("SELECT id,svid,constellation,cn0,agc,azimuth_deg,elevation_deg FROM sat_Data;")  ### SQL selection statement
-
-                export_csv = descrip + str(x) + '.csv'  ###fileId CSV Name
-
-                with open(export_csv, 'wb') as csvf:
+                data = cur.execute(
+                    "SELECT id, svid, constellation, cn0, agc, azimuth_deg,elevation_deg,FROM sat_Data;"  )  ### SQL selection statement
+                ##local_time = cur.execute("SELECT local_time FROM sat_Data")
+                export_csv = descrip +str(x) + '.csv'
+                with open(export_csv, 'w') as csvf:
                     writer = csv.writer(csvf)
-                    writer.writerow(
-                        ['id', 'svid', 'constellation', 'cn0', 'agc', 'azimuth_deg', 'elevation_deg',"fileName", "CONUS", "fileId" ])     ### Creats header row for CSV file
+                    writer.writerow(['id', 'svid', 'constellation', 'cn0', 'agc', 'azimuth_deg', 'elevation_deg', 'fileName', 'CONUS', 'fileId'])  ### Creats header row for CSV file
                     writer.writerows(data)
                     conn.close()
 
             output_df = pd.read_csv(export_csv)
             ### Fills in Columns with Static data  to Columns added that were provided via the SQL statement
             output_df['CONUS'] = '0'  ### Working to add automatic detection for future use
-            output_df['fileId'] = fileId
+            output_df['fileId'] = export_csv
             output_df['fileName'] = filename
 
             output_df.to_csv(export_csv)
@@ -46,19 +44,17 @@ def individual_output():
             print(filename + " is empty")
 
 
-
-
 def combine():
     # Creates combined file CSV and assigns headers for columns
     allOutput = "allOutput.csv"
-    with open(allOutput, 'wb') as csvfile:
+    with open(allOutput, 'w') as csvfile:
         fileWriter = csv.writer(csvfile)
         fileWriter.writerow(
             ['id', 'svid', 'constellation', 'cn0', 'agc', 'azimuth_deg', 'elevation_deg', "fileName", "CONUS",
              "fileId"])
 
-    csv_path = '/home/summerintern18/Torgi/Python/'
-    original = pd.read_csv('/home/summerintern18/Torgi/Python/allOutput.csv')
+    csv_path = '/home/fletcher/dev/0_Torgi/2_Python/'
+    original = pd.read_csv(csv_path + 'allOutput.csv')
     for f in os.listdir(csv_path):
 
         if f.endswith(".csv"):
@@ -87,4 +83,3 @@ def main():
 
 
 main()
-
